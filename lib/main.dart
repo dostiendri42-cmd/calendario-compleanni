@@ -4,6 +4,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:video_player/video_player.dart';
 import 'package:warm_alarm/warm_alarm.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ============================================================
 // MODELLI DATI
@@ -39,7 +40,6 @@ class MonthData {
 // ============================================================
 final List<MonthData> monthsData = [
   const MonthData(name: 'Gennaio', video: 'assets/gennaio.mp4', people: [
-    // Ordine invertito: Mimoza a sinistra, Sherif a destra
     Person(name: 'Mimoza Sulo', day: 18, photoBase: 'assets/gennaio', audio: 'assets/gennaio.mp3'),
     Person(name: 'Sherif Hita', day: 1, photoBase: 'assets/gennaio2', audio: 'assets/gennaio2.mp3'),
   ]),
@@ -87,7 +87,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'kalendar', // Nome dell'app
+      title: 'kalendar',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       home: const CalendarPage(),
@@ -129,8 +129,8 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.3); // Volume al 30%
-      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
+      await _videoController!.setVolume(0.3);
+      await _videoController!.setPlaybackSpeed(0.7);
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -138,58 +138,96 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
+  // ============================================================
+  // LOGICA SVEGLIE CON CACHE PER 5 ANNI
+  // ============================================================
   Future<void> _initAlarmsAndPermissions() async {
     await Permission.notification.request();
     await Permission.scheduleExactAlarm.request();
 
+    final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
 
-    for (int m = 0; m < monthsData.length; m++) {
-      final month = monthsData[m];
-      for (int p = 0; p < month.people.length; p++) {
-        final person = month.people[p];
-        
-        DateTime targetDate = DateTime(now.year, m + 1, person.day);
-        
-        if (targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
-          targetDate = DateTime(now.year + 1, m + 1, person.day);
+    // 1. Carica la lista degli ID già programmati
+    final allSavedIds = prefs.getStringList('scheduled_alarm_ids') ?? [];
+    
+    // 2. Filtra: mantieni solo gli ID degli anni >= a quello corrente
+    //    (gli anni passati vengono automaticamente rimossi per pulizia)
+    final validSavedIds = allSavedIds
+        .map(int.parse)
+        .where((id) => (id ~/ 100000) >= now.year)
+        .toSet();
+
+    debugPrint("Sveglie già in cache per anni futuri: ${validSavedIds.length}");
+
+    const int yearsAhead = 5;
+    int newlyScheduled = 0;
+
+    // 3. Cicla su 5 anni
+    for (int yearOffset = 0; yearOffset < yearsAhead; yearOffset++) {
+      final int year = now.year + yearOffset;
+
+      for (int m = 0; m < monthsData.length; m++) {
+        final month = monthsData[m];
+        for (int p = 0; p < month.people.length; p++) {
+          final person = month.people[p];
+
+          // Salta se il compleanno di questo anno è già passato
+          final birthdayDate = DateTime(year, m + 1, person.day);
+          final today = DateTime(now.year, now.month, now.day);
+          if (birthdayDate.isBefore(today)) continue;
+
+          // --- SVEGLIA ORE 9:00 ---
+          final alarm9 = DateTime(year, m + 1, person.day, 9, 0);
+          final id9 = year * 100000 + (m + 1) * 1000 + p * 10 + 1;
+          
+          if (!validSavedIds.contains(id9) && alarm9.isAfter(now)) {
+            await WarmAlarm.scheduleAlarm(
+              WarmAlarmSchedule(
+                id: id9,
+                scheduledAt: alarm9,
+                notification: WarmAlarmNotification(
+                  title: 'Buon Compleanno!',
+                  body: 'Oggi è il compleanno di ${person.name} (9:00)',
+                ),
+                audio: WarmAlarmAudio(assetPath: person.audio, loop: false),
+              ),
+            );
+            validSavedIds.add(id9);
+            newlyScheduled++;
+          }
+
+          // --- SVEGLIA ORE 10:00 ---
+          final alarm10 = DateTime(year, m + 1, person.day, 10, 0);
+          final id10 = year * 100000 + (m + 1) * 1000 + p * 10 + 2;
+          
+          if (!validSavedIds.contains(id10) && alarm10.isAfter(now)) {
+            await WarmAlarm.scheduleAlarm(
+              WarmAlarmSchedule(
+                id: id10,
+                scheduledAt: alarm10,
+                notification: WarmAlarmNotification(
+                  title: 'Buon Compleanno!',
+                  body: 'Oggi è il compleanno di ${person.name} (10:00)',
+                ),
+                audio: WarmAlarmAudio(assetPath: person.audio, loop: false),
+              ),
+            );
+            validSavedIds.add(id10);
+            newlyScheduled++;
+          }
         }
-
-        // Sveglia alle 9:00
-        final alarm9 = DateTime(targetDate.year, targetDate.month, targetDate.day, 9, 0);
-        await WarmAlarm.scheduleAlarm(
-          WarmAlarmSchedule(
-            id: (m + 1) * 1000 + p * 10 + 1,
-            scheduledAt: alarm9,
-            notification: WarmAlarmNotification(
-              title: 'Buon Compleanno!',
-              body: 'Oggi è il compleanno di ${person.name} (9:00)',
-            ),
-            audio: WarmAlarmAudio(
-              assetPath: person.audio,
-              loop: false, 
-            ),
-          ),
-        );
-
-        // Sveglia alle 10:00
-        final alarm10 = DateTime(targetDate.year, targetDate.month, targetDate.day, 10, 0);
-        await WarmAlarm.scheduleAlarm(
-          WarmAlarmSchedule(
-            id: (m + 1) * 1000 + p * 10 + 2,
-            scheduledAt: alarm10,
-            notification: WarmAlarmNotification(
-              title: 'Buon Compleanno!',
-              body: 'Oggi è il compleanno di ${person.name} (10:00)',
-            ),
-            audio: WarmAlarmAudio(
-              assetPath: person.audio,
-              loop: false,
-            ),
-          ),
-        );
       }
     }
+
+    // 4. Salva la lista aggiornata
+    await prefs.setStringList(
+      'scheduled_alarm_ids',
+      validSavedIds.map((e) => e.toString()).toList(),
+    );
+
+    debugPrint("Nuove sveglie programmate adesso: $newlyScheduled");
+    debugPrint("Totale sveglie attive in cache: ${validSavedIds.length}");
   }
 
   void _changeMonth(int increment) {
@@ -224,7 +262,6 @@ class _CalendarPageState extends State<CalendarPage> {
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isLandscape = constraints.maxWidth > constraints.maxHeight;
-
                 return isLandscape
                     ? _buildLandscapeLayout(data)
                     : _buildPortraitLayout(data);
@@ -247,7 +284,7 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
         const Spacer(),
         Padding(
-          padding: const EdgeInsets.only(bottom: 60.0), // Margine extra in fondo
+          padding: const EdgeInsets.only(bottom: 60.0),
           child: _buildCalendar(data),
         ),
       ],
@@ -277,7 +314,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildPhotoBox(Person person) {
-    const double size = 120; // Dimensione foto aumentata
+    const double size = 120;
 
     return Container(
       margin: const EdgeInsets.all(8),
@@ -326,7 +363,7 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.08), // Quasi trasparente
+            color: Colors.black.withOpacity(0.08),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white24),
           ),
@@ -477,7 +514,7 @@ class _SmartImageState extends State<_SmartImage> {
         color: Colors.black26,
         child: const Center(
           child: SizedBox(
-            width: 20, 
+            width: 20,
             height: 20,
             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
           ),
