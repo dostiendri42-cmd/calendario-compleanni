@@ -2,8 +2,8 @@ name: Build Flutter APK
 
 on:
   push:
-    branches: [ "main", "master" ] # Si attiva quando carichi file su main o master
-  workflow_dispatch: # Ti permette di avviare la build anche manualmente
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -25,6 +25,9 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
+
+      - name: Generate App Icon
+        run: dart run flutter_launcher_icons # <--- Aggiunta questa riga
 
       - name: Build APK
         run: flutter build apk --release
