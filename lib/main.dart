@@ -39,6 +39,7 @@ class MonthData {
 // ============================================================
 final List<MonthData> monthsData = [
   const MonthData(name: 'Gennaio', video: 'assets/gennaio.mp4', people: [
+    Person(name: 'Sherif Hita', day: 1, photoBase: 'assets/gennaio2', audio: 'assets/gennaio2.mp3'),
     Person(name: 'Mimoza Sulo', day: 18, photoBase: 'assets/gennaio', audio: 'assets/gennaio.mp3'),
   ]),
   const MonthData(name: 'Febbraio', video: 'assets/febbraio.mp4', people: [
@@ -85,7 +86,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Calendario Compleanni',
+      title: 'kalendar', // Nome dell'app aggiornato
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       home: const CalendarPage(),
@@ -127,8 +128,8 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.3);
-      await _videoController!.setPlaybackSpeed(0.7);
+      await _videoController!.setVolume(0.3); // Volume al 30%
+      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -165,7 +166,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             audio: WarmAlarmAudio(
               assetPath: person.audio,
-              loop: false,
+              loop: false, 
             ),
           ),
         );
@@ -234,9 +235,6 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  // ============================================================
-  // LAYOUT PORTRAIT (Verticale)
-  // ============================================================
   Widget _buildPortraitLayout(MonthData data) {
     return Column(
       children: [
@@ -244,24 +242,17 @@ class _CalendarPageState extends State<CalendarPage> {
         if (data.people.isNotEmpty)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: data.people
-                .map((p) => _buildPhotoBox(p))
-                .toList(),
+            children: data.people.map((p) => _buildPhotoBox(p)).toList(),
           ),
-        
-        const Spacer(), 
-        
+        const Spacer(),
         Padding(
-          padding: const EdgeInsets.only(bottom: 60.0),
+          padding: const EdgeInsets.only(bottom: 60.0), // Margine extra in fondo
           child: _buildCalendar(data),
         ),
       ],
     );
   }
 
-  // ============================================================
-  // LAYOUT LANDSCAPE (Orizzontale)
-  // ============================================================
   Widget _buildLandscapeLayout(MonthData data) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0, top: 8.0),
@@ -285,8 +276,7 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildPhotoBox(Person person) {
-    // Foto ingrandite: 120 invece di 90
-    const double size = 120;
+    const double size = 120; // Dimensione foto aumentata
 
     return Container(
       margin: const EdgeInsets.all(8),
@@ -335,8 +325,7 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            // Sfondo del calendario quasi trasparente (prima era 0.3)
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.08), // Quasi trasparente
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white24),
           ),
@@ -440,9 +429,6 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 }
 
-// ============================================================
-// WIDGET INTELLIGENTE PER CARICARE LE IMMAGINI (ASINCRONO)
-// ============================================================
 class _SmartImage extends StatefulWidget {
   final String basePath;
   final double size;
@@ -465,7 +451,6 @@ class _SmartImageState extends State<_SmartImage> {
 
   Future<void> _findImage() async {
     final extensions = ['.jpeg', '.jpg', '.png', '.JPG', '.JPEG', '.PNG'];
-    
     for (final ext in extensions) {
       final path = '${widget.basePath}$ext';
       try {
@@ -477,16 +462,9 @@ class _SmartImageState extends State<_SmartImage> {
           });
         }
         return;
-      } catch (_) {
-        // Non trovato, passa alla prossima
-      }
+      } catch (_) {}
     }
-    
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    if (mounted) setState(() => _isLoading = false);
   }
 
   @override
@@ -505,7 +483,6 @@ class _SmartImageState extends State<_SmartImage> {
         ),
       );
     }
-
     if (_resolvedPath != null) {
       return Image.asset(
         _resolvedPath!,
@@ -514,7 +491,6 @@ class _SmartImageState extends State<_SmartImage> {
         fit: BoxFit.cover,
       );
     }
-
     return Container(
       width: widget.size,
       height: widget.size,
@@ -524,13 +500,9 @@ class _SmartImageState extends State<_SmartImage> {
   }
 }
 
-// ============================================================
-// WIDGET PER L'ANIMAZIONE DI LAMPEGGIO
-// ============================================================
 class BlinkingCell extends StatefulWidget {
   final Widget child;
   const BlinkingCell({super.key, required this.child});
-
   @override
   State<BlinkingCell> createState() => _BlinkingCellState();
 }
@@ -542,14 +514,8 @@ class _BlinkingCellState extends State<BlinkingCell> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat(reverse: true);
-    
-    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -560,9 +526,6 @@ class _BlinkingCellState extends State<BlinkingCell> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: widget.child,
-    );
+    return FadeTransition(opacity: _animation, child: widget.child);
   }
 }
