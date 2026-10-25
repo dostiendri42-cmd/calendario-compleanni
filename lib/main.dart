@@ -1,31 +1,79 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:background/background.dart';
+import 'package:video_player/video_player.dart';
 import 'package:warm_alarm/warm_alarm.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 // ============================================================
-// CONFIGURAZIONE MESI
+// MODELLI DATI
 // ============================================================
-final List<Map<String, dynamic>> monthsData = [
-  {'name': 'Gennaio', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Febbraio', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Marzo', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Aprile', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Maggio', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Giugno', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Luglio', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Agosto', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Settembre', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Ottobre', 'person': 'Endri', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Novembre', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
-  {'name': 'Dicembre', 'person': 'Nome Persona', 'birthday': 20, 'photo': 'assets/ottobre.jpeg', 'video': 'assets/ottobre.mp4'},
+class Person {
+  final String name;
+  final int day;
+  final String photo;
+  final String audio;
+
+  const Person({
+    required this.name,
+    required this.day,
+    required this.photo,
+    required this.audio,
+  });
+}
+
+class MonthData {
+  final String name;
+  final String video;
+  final List<Person> people;
+
+  const MonthData({
+    required this.name,
+    required this.video,
+    required this.people,
+  });
+}
+
+// ============================================================
+// CONFIGURAZIONE MESI E COMPLEANNI
+// ============================================================
+final List<MonthData> monthsData = [
+  const MonthData(name: 'Gennaio', video: 'assets/gennaio.mp4', people: [
+    Person(name: 'Mimoza Sulo', day: 18, photo: 'assets/gennaio.jpeg', audio: 'assets/gennaio.mp3'),
+  ]),
+  const MonthData(name: 'Febbraio', video: 'assets/febbraio.mp4', people: [
+    Person(name: 'Rigels Hita', day: 18, photo: 'assets/febbraio.jpeg', audio: 'assets/febbraio.mp3'),
+  ]),
+  const MonthData(name: 'Marzo', video: 'assets/marzo.mp4', people: [
+    Person(name: 'Lukas Hita', day: 10, photo: 'assets/marzo.jpeg', audio: 'assets/marzo.mp3'),
+  ]),
+  const MonthData(name: 'Aprile', video: 'assets/aprile.mp4', people: [
+    Person(name: 'Arben Rexha', day: 5, photo: 'assets/aprile.jpeg', audio: 'assets/aprile.mp3'),
+  ]),
+  const MonthData(name: 'Maggio', video: 'assets/maggio.mp4', people: []), // Nessun compleanno
+  const MonthData(name: 'Giugno', video: 'assets/giugno.mp4', people: [
+    Person(name: 'Albion Rexha', day: 16, photo: 'assets/giugno.jpeg', audio: 'assets/giugno.mp3'),
+  ]),
+  const MonthData(name: 'Luglio', video: 'assets/luglio.mp4', people: [
+    Person(name: 'Arben Dosti', day: 22, photo: 'assets/luglio.jpeg', audio: 'assets/luglio.mp3'),
+  ]),
+  const MonthData(name: 'Agosto', video: 'assets/agosto.mp4', people: []), // Nessun compleanno
+  const MonthData(name: 'Settembre', video: 'assets/settembre.mp4', people: [
+    Person(name: 'Albana Rexha', day: 16, photo: 'assets/settembre.jpeg', audio: 'assets/settembre.mp3'),
+  ]),
+  const MonthData(name: 'Ottobre', video: 'assets/ottobre.mp4', people: [
+    Person(name: 'Ayla Rexha', day: 8, photo: 'assets/ottobre.png', audio: 'assets/ottobre.mp3'),
+    Person(name: 'Endri Dosti', day: 20, photo: 'assets/ottobre2.png', audio: 'assets/ottobre2.mp3'),
+  ]),
+  const MonthData(name: 'Novembre', video: 'assets/novembre.mp4', people: [
+    Person(name: 'Vjollca Hita', day: 11, photo: 'assets/novembre.jpeg', audio: 'assets/novembre.mp3'),
+    Person(name: 'Claid Dosti', day: 24, photo: 'assets/novembre2.jpeg', audio: 'assets/novembre2.mp3'),
+  ]),
+  const MonthData(name: 'Dicembre', video: 'assets/dicembre.mp4', people: [
+    Person(name: 'Amanda Rexha', day: 12, photo: 'assets/dicembre.jpeg', audio: 'assets/dicembre.mp3'),
+  ]),
 ];
 
-// Gli ID ora sono numeri interi, come richiesto dalla libreria
 const int TEST_ALARM_ID = 1;
-const int REAL_ALARM_ID = 2;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,247 +101,406 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  int _currentMonthIndex = 9;
-  final FlutterTts _tts = FlutterTts();
-  bool _alarmModalVisible = false;
-  String _alarmPerson = '';
+  int _currentMonthIndex = 9; // Inizia da Ottobre
+  VideoPlayerController? _videoController;
+  bool _isVideoInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _initAlarmsAndPermissions();
-    _listenToAlarms();
+    _initVideo();
   }
 
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
+  // Inizializza il video per il mese corrente
+  Future<void> _initVideo() async {
+    setState(() => _isVideoInitialized = false);
+    await _videoController?.dispose();
+    
+    final videoPath = monthsData[_currentMonthIndex].video;
+    _videoController = VideoPlayerController.asset(videoPath);
+    
+    try {
+      await _videoController!.initialize();
+      await _videoController!.setLooping(true);
+      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
+      await _videoController!.play();
+      if (mounted) setState(() => _isVideoInitialized = true);
+    } catch (e) {
+      debugPrint("Errore nel caricamento del video: $e");
+    }
+  }
+
+  // Imposta la sveglia reale per tutti i compleanni dell'anno
   Future<void> _initAlarmsAndPermissions() async {
     await Permission.notification.request();
-    
-    // Sveglia di prova: 10 secondi da adesso
-    final testTime = DateTime.now().add(const Duration(seconds: 10));
-    await _scheduleAlarm(
-      id: TEST_ALARM_ID,
-      time: testTime,
-      title: 'Sveglia di prova',
-      body: 'Compleanno di Endri',
-    );
-    
-    // Sveglia reale: prossimo compleanno alle 09:00
+    await Permission.scheduleExactAlarm.request();
+
     final now = DateTime.now();
-    final currentMonth = monthsData[now.month - 1];
-    DateTime targetDate = DateTime(now.year, now.month, currentMonth['birthday'], 9, 0);
-    if (targetDate.isBefore(now)) {
-      targetDate = DateTime(now.year + 1, now.month, currentMonth['birthday'], 9, 0);
+
+    for (int m = 0; m < monthsData.length; m++) {
+      final month = monthsData[m];
+      for (int p = 0; p < month.people.length; p++) {
+        final person = month.people[p];
+        
+        // Calcola la prossima data del compleanno alle 09:00
+        DateTime targetDate = DateTime(now.year, m + 1, person.day, 9, 0);
+        if (targetDate.isBefore(now)) {
+          targetDate = DateTime(now.year + 1, m + 1, person.day, 9, 0);
+        }
+
+        await WarmAlarm.scheduleAlarm(
+          WarmAlarmSchedule(
+            id: (m + 1) * 100 + p, // ID univoco per ogni persona
+            scheduledAt: targetDate,
+            notification: WarmAlarmNotification(
+              title: 'Buon Compleanno!',
+              body: 'Oggi è il compleanno di ${person.name}',
+            ),
+            audio: WarmAlarmAudio(
+              assetPath: person.audio, // Usa l'MP3 specifico
+              loop: true,
+            ),
+          ),
+        );
+      }
     }
-    await _scheduleAlarm(
-      id: REAL_ALARM_ID,
-      time: targetDate,
-      title: 'Compleanno!',
-      body: 'Oggi è il compleanno di ${currentMonth['person']}',
-    );
+    
+    // Avvia la sveglia di test per il mese corrente
+    _scheduleTestAlarm();
   }
 
-  Future<void> _scheduleAlarm({
-    required int id, // Ora è un intero
-    required DateTime time,
-    required String title,
-    required String body,
-  }) async {
+  // Sveglia di test: 3 secondi dopo
+  Future<void> _scheduleTestAlarm() async {
+    await WarmAlarm.cancelAlarm(TEST_ALARM_ID);
+    
+    final people = monthsData[_currentMonthIndex].people;
+    if (people.isEmpty) return;
+
+    final person = people.first; // Prende la prima persona del mese
+    final testTime = DateTime.now().add(const Duration(seconds: 3));
+
     await WarmAlarm.scheduleAlarm(
       WarmAlarmSchedule(
-        id: id,
-        scheduledAt: time,
-        notification: WarmAlarmNotification(title: title, body: body),
-        audio: const WarmAlarmAudio(loop: true),
+        id: TEST_ALARM_ID,
+        scheduledAt: testTime,
+        notification: WarmAlarmNotification(
+          title: 'Sveglia di prova',
+          body: 'Compleanno di ${person.name}',
+        ),
+        audio: WarmAlarmAudio(
+          assetPath: person.audio,
+          loop: true,
+        ),
       ),
     );
   }
 
-  void _listenToAlarms() {
-    WarmAlarm.events.listen((event) async {
-      // La classe corretta è WarmAlarmFired
-      if (event is WarmAlarmFired) {
-        // La proprietà dell'ID è alarmId
-        String person = event.alarmId == TEST_ALARM_ID
-            ? 'Endri'
-            : monthsData[DateTime.now().month - 1]['person'];
-        setState(() {
-          _alarmPerson = person;
-          _alarmModalVisible = true;
-        });
-        await _tts.setLanguage('it-IT');
-        await _tts.speak('Oggi è il compleanno di $person');
-      }
-    });
-  }
-
-  void _prevMonth() {
+  void _changeMonth(int increment) {
     setState(() {
-      _currentMonthIndex = (_currentMonthIndex - 1 + 12) % 12;
+      _currentMonthIndex = (_currentMonthIndex + increment + 12) % 12;
     });
-  }
-
-  void _nextMonth() {
-    setState(() {
-      _currentMonthIndex = (_currentMonthIndex + 1) % 12;
-    });
+    _initVideo();
+    _scheduleTestAlarm();
   }
 
   @override
   Widget build(BuildContext context) {
     final data = monthsData[_currentMonthIndex];
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-    final isLandscape = screenWidth > screenHeight;
 
     return Scaffold(
       body: Stack(
         children: [
-          Background(path: data['video'], child: Container()),
-          Positioned(
-            top: isLandscape ? screenHeight * 0.2 : 30,
-            left: 30,
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.black45,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white54, width: 2),
-              ),
-              child: Column(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      data['photo'],
-                      width: isLandscape ? 140 : 220,
-                      height: isLandscape ? 140 : 220,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    data['person'],
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: isLandscape ? null : 30,
-            top: isLandscape ? screenHeight * 0.2 : null,
-            right: 30,
-            width: isLandscape ? screenWidth * 0.5 : screenWidth * 0.92,
-            child: _buildCalendar(data, isLandscape),
-          ),
-          if (_alarmModalVisible)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black54,
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(40),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFFFD166), Color(0xFFFF8C42)]),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('⏰', style: TextStyle(fontSize: 64)),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Oggi è il compleanno di $_alarmPerson!',
-                          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Colors.black87),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.black87, foregroundColor: const Color(0xFFFFD166)),
-                          onPressed: () => setState(() => _alarmModalVisible = false),
-                          child: const Text('Ferma sveglia'),
-                        ),
-                      ],
-                    ),
-                  ),
+          // SFONDO VIDEO
+          if (_isVideoInitialized && _videoController != null)
+            SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                child: SizedBox(
+                  width: _videoController!.value.size.width,
+                  height: _videoController!.value.size.height,
+                  child: VideoPlayer(_videoController!),
                 ),
               ),
+            )
+          else
+            Container(color: Colors.black),
+
+          // LAYOUT RESPONSIVE
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isLandscape = constraints.maxWidth > constraints.maxHeight;
+
+                return isLandscape
+                    ? _buildLandscapeLayout(data)
+                    : _buildPortraitLayout(data);
+              },
             ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCalendar(Map<String, dynamic> data, bool isLandscape) {
+  // ============================================================
+  // LAYOUT PORTRAIT (Verticale)
+  // ============================================================
+  Widget _buildPortraitLayout(MonthData data) {
+    return Column(
+      children: [
+        // Frecce di test in alto
+        _buildNavArrows(),
+        
+        // Foto in alto
+        if (data.people.isNotEmpty)
+          Expanded(
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: data.people
+                  .map((p) => _buildPhotoBox(p, data.people.length))
+                  .toList(),
+            ),
+          ),
+
+        // Calendario in basso
+        Expanded(
+          flex: 3,
+          child: Center(child: _buildCalendar(data)),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // LAYOUT LANDSCAPE (Orizzontale)
+  // ============================================================
+  Widget _buildLandscapeLayout(MonthData data) {
+    return Row(
+      children: [
+        // Foto a sinistra
+        Expanded(
+          flex: 2,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildNavArrows(),
+              if (data.people.isNotEmpty)
+                ...data.people.map((p) => _buildPhotoBox(p, data.people.length)).toList(),
+            ],
+          ),
+        ),
+        
+        // Calendario a destra
+        Expanded(
+          flex: 3,
+          child: Center(child: _buildCalendar(data)),
+        ),
+      ],
+    );
+  }
+
+  // ============================================================
+  // COMPONENTI UI
+  // ============================================================
+  Widget _buildNavArrows() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
+          onPressed: () => _changeMonth(-1),
+        ),
+        Text(
+          monthsData[_currentMonthIndex].name.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2,
+            color: Colors.white,
+            shadows: [Shadow(color: Colors.black, blurRadius: 8)],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, color: Colors.white70),
+          onPressed: () => _changeMonth(1),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPhotoBox(Person person, int count) {
+    // Se ci sono 2 persone, riduciamo le dimensioni
+    final double size = count > 1 ? 120 : 200;
+
+    return Container(
+      margin: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.black45,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white54, width: 2),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.asset(
+              person.photo,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: size,
+                height: size,
+                color: Colors.grey,
+                child: const Icon(Icons.person, size: 50),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            person.name,
+            style: TextStyle(
+              fontSize: count > 1 ? 14 : 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalendar(MonthData data) {
     final now = DateTime.now();
     final year = now.year;
     final month = _currentMonthIndex + 1;
     final firstDay = DateTime(year, month, 1);
     final daysInMonth = DateTime(year, month + 1, 0).day;
-    int startOffset = firstDay.weekday - 1;
+    final startOffset = firstDay.weekday - 1;
 
     final List<Widget> cells = [];
     const weekdays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
+
+    // Intestazioni giorni
     for (var wd in weekdays) {
-      cells.add(Container(
-        alignment: Alignment.center,
-        child: Text(wd, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70)),
-      ));
+      cells.add(
+        Center(
+          child: Text(
+            wd,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70),
+          ),
+        ),
+      );
     }
+
+    // Celle vuote
     for (int i = 0; i < startOffset; i++) {
-      cells.add(Container());
+      cells.add(const SizedBox());
     }
+
+    // Giorni del mese
     for (int day = 1; day <= daysInMonth; day++) {
-      bool isBirthday = day == data['birthday'];
-      cells.add(Container(
+      // Controlla se questo giorno è un compleanno
+      final birthdaysToday = data.people.where((p) => p.day == day).toList();
+      final isBirthday = birthdaysToday.isNotEmpty;
+
+      Widget dayContent = Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isBirthday ? const Color(0xFFFF8C42) : Colors.white10,
           borderRadius: BorderRadius.circular(8),
-          border: isBirthday ? Border.all(color: Colors.white, width: 2) : Border.all(color: Colors.white30),
+          border: Border.all(
+            color: isBirthday ? Colors.white : Colors.white30,
+            width: isBirthday ? 2 : 1,
+          ),
         ),
         child: Text(
           '$day',
           style: TextStyle(
-            fontSize: isBirthday ? 18 : 16,
-            fontWeight: isBirthday ? FontWeight.w800 : FontWeight.w500,
+            fontSize: isBirthday ? 18 : 15,
+            fontWeight: isBirthday ? FontWeight.w900 : FontWeight.w500,
             color: isBirthday ? Colors.black87 : Colors.white,
           ),
         ),
-      ));
+      );
+
+      // Applica l'animazione di lampeggio se è un compleanno
+      if (isBirthday) {
+        cells.add(BlinkingCell(child: dayContent));
+      } else {
+        cells.add(dayContent);
+      }
     }
 
     return Container(
       padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.2),
+        color: Colors.black.withOpacity(0.3),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(onPressed: _prevMonth, icon: const Icon(Icons.chevron_left, color: Colors.white)),
-              Text(
-                '${data['name']} $year',
-                style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              IconButton(onPressed: _nextMonth, icon: const Icon(Icons.chevron_right, color: Colors.white)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 7,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            children: cells,
-          ),
-        ],
+      child: GridView.count(
+        crossAxisCount: 7,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        children: cells,
       ),
+    );
+  }
+}
+
+// ============================================================
+// WIDGET PER L'ANIMAZIONE DI LAMPEGGIO
+// ============================================================
+class BlinkingCell extends StatefulWidget {
+  final Widget child;
+  const BlinkingCell({super.key, required this.child});
+
+  @override
+  State<BlinkingCell> createState() => _BlinkingCellState();
+}
+
+class _BlinkingCellState extends State<BlinkingCell> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+    
+    _animation = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _animation,
+      child: widget.child,
     );
   }
 }
