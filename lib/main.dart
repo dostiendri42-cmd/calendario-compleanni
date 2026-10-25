@@ -129,7 +129,7 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.0); // Video Muto
+      await _videoController!.setVolume(0.3); // Video Muto
       await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
