@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle; // Necessario per il controllo dei file
 import 'package:video_player/video_player.dart';
 import 'package:warm_alarm/warm_alarm.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -10,7 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 class Person {
   final String name;
   final int day;
-  final String photoBase; // Ora usiamo il percorso base senza estensione
+  final String photoBase;
   final String audio;
 
   const Person({
@@ -128,8 +129,8 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.3);
-      await _videoController!.setPlaybackSpeed(0.7);
+      await _videoController!.setVolume(0.3); // Volume al 30%
+      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -166,7 +167,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             audio: WarmAlarmAudio(
               assetPath: person.audio,
-              loop: false, // Suona una volta (assicurati che l'mp3 abbia 2 ripetizioni)
+              loop: false, // Suona una volta (l'MP3 deve avere già le 2 ripetizioni)
             ),
           ),
         );
@@ -263,29 +264,36 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
+  // ============================================================
+  // LAYOUT PORTRAIT (Verticale)
+  // ============================================================
   Widget _buildPortraitLayout(MonthData data) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 50.0), // Più spazio in fondo
-      child: Column(
-        children: [
-          const SizedBox(height: 8),
-          if (data.people.isNotEmpty)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: data.people.map((p) => _buildPhotoBox(p)).toList(),
-            ),
-          const Spacer(),
-          Flexible(
-            child: Center(
-              child: _buildCalendar(data),
-            ),
+    return Column(
+      children: [
+        const SizedBox(height: 8),
+        if (data.people.isNotEmpty)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: data.people
+                .map((p) => _buildPhotoBox(p))
+                .toList(),
           ),
-          const SizedBox(height: 16),
-        ],
-      ),
+        
+        // Questo Spacer spinge il calendario verso il basso
+        const Spacer(), 
+        
+        // Il calendario con un margine di 60 pixel dal fondo per non coprire i tasti
+        Padding(
+          padding: const EdgeInsets.only(bottom: 60.0),
+          child: _buildCalendar(data),
+        ),
+      ],
     );
   }
 
+  // ============================================================
+  // LAYOUT LANDSCAPE (Orizzontale)
+  // ============================================================
   Widget _buildLandscapeLayout(MonthData data) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 30.0, top: 8.0),
@@ -324,8 +332,9 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            // Usa il widget intelligente per caricare l'immagine
-            child: _FallbackImage(
+            // Usa il nuovo widget intelligente che gestisce il caricamento
+            child: _SmartImage(
+              key: ValueKey(person.name),
               basePath: person.photoBase,
               size: size,
             ),
@@ -463,51 +472,91 @@ class _CalendarPageState extends State<CalendarPage> {
 }
 
 // ============================================================
-// WIDGET INTELLIGENTE PER CARICARE LE IMMAGINI
+// WIDGET INTELLIGENTE PER CARICARE LE IMMAGINI (ASINCRONO)
 // ============================================================
-class _FallbackImage extends StatefulWidget {
+class _SmartImage extends StatefulWidget {
   final String basePath;
   final double size;
 
-  const _FallbackImage({required this.basePath, required this.size});
+  const _SmartImage({Key? key, required this.basePath, required this.size}) : super(key: key);
 
   @override
-  State<_FallbackImage> createState() => _FallbackImageState();
+  State<_SmartImage> createState() => _SmartImageState();
 }
 
-class _FallbackImageState extends State<_FallbackImage> {
-  // Prova queste estensioni in ordine
-  final List<String> _extensions = ['.jpeg', '.jpg', '.png'];
-  int _currentIndex = 0;
+class _SmartImageState extends State<_SmartImage> {
+  String? _resolvedPath;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _findImage();
+  }
+
+  Future<void> _findImage() async {
+    // Prova le estensioni più comuni
+    final extensions = ['.jpeg', '.jpg', '.png', '.JPG', '.JPEG', '.PNG'];
+    
+    for (final ext in extensions) {
+      final path = '${widget.basePath}$ext';
+      try {
+        // rootBundle controlla se il file esiste davvero nel pacchetto
+        await rootBundle.load(path);
+        if (mounted) {
+          setState(() {
+            _resolvedPath = path;
+            _isLoading = false;
+          });
+        }
+        return; // Trovato! Esci dal ciclo
+      } catch (_) {
+        // Non trovato, passa alla prossima estensione
+      }
+    }
+    
+    // Se arriva qui, non ha trovato nulla
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentIndex >= _extensions.length) {
-      // Se nessuna immagine è valida, mostra un'icona segnaposto
+    if (_isLoading) {
+      // Mostra un cerchietto di caricamento mentre cerca il file
       return Container(
         width: widget.size,
         height: widget.size,
-        color: Colors.grey,
-        child: const Icon(Icons.person, size: 40),
+        color: Colors.black26,
+        child: const Center(
+          child: SizedBox(
+            width: 20, 
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+          ),
+        ),
       );
     }
 
-    return Image.asset(
-      '${widget.basePath}${_extensions[_currentIndex]}',
+    if (_resolvedPath != null) {
+      // Mostra l'immagine trovata
+      return Image.asset(
+        _resolvedPath!,
+        width: widget.size,
+        height: widget.size,
+        fit: BoxFit.cover,
+      );
+    }
+
+    // Segnaposto se nessuna immagine è valida
+    return Container(
       width: widget.size,
       height: widget.size,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) {
-        // Se fallisce, passa all'estensione successiva
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            setState(() {
-              _currentIndex++;
-            });
-          }
-        });
-        return SizedBox(width: widget.size, height: widget.size);
-      },
+      color: Colors.grey.shade800,
+      child: const Icon(Icons.person, size: 40, color: Colors.white54),
     );
   }
 }
