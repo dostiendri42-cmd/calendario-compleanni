@@ -49,24 +49,24 @@ final List<MonthData> monthsData = [
   const MonthData(name: 'Aprile', video: 'assets/aprile.mp4', people: [
     Person(name: 'Arben Rexha', day: 5, photo: 'assets/aprile.jpeg', audio: 'assets/aprile.mp3'),
   ]),
-  const MonthData(name: 'Maggio', video: 'assets/maggio.mp4', people: []), // Nessun compleanno
+  const MonthData(name: 'Maggio', video: 'assets/maggio.mp4', people: []),
   const MonthData(name: 'Giugno', video: 'assets/giugno.mp4', people: [
     Person(name: 'Albion Rexha', day: 16, photo: 'assets/giugno.jpeg', audio: 'assets/giugno.mp3'),
   ]),
   const MonthData(name: 'Luglio', video: 'assets/luglio.mp4', people: [
     Person(name: 'Arben Dosti', day: 22, photo: 'assets/luglio.jpeg', audio: 'assets/luglio.mp3'),
   ]),
-  const MonthData(name: 'Agosto', video: 'assets/agosto.mp4', people: []), // Nessun compleanno
+  const MonthData(name: 'Agosto', video: 'assets/agosto.mp4', people: []),
   const MonthData(name: 'Settembre', video: 'assets/settembre.mp4', people: [
     Person(name: 'Albana Rexha', day: 16, photo: 'assets/settembre.jpeg', audio: 'assets/settembre.mp3'),
   ]),
   const MonthData(name: 'Ottobre', video: 'assets/ottobre.mp4', people: [
-    Person(name: 'Ayla Rexha', day: 8, photo: 'assets/ottobre.png', audio: 'assets/ottobre.mp3'),
-    Person(name: 'Endri Dosti', day: 20, photo: 'assets/ottobre2.png', audio: 'assets/ottobre2.mp3'),
+    Person(name: 'Ayla Rexha', day: 8, photo: 'assets/ottobre2.jpeg', audio: 'assets/ottobre2.mp3'),
+    Person(name: 'Endri Dosti', day: 20, photo: 'assets/ottobre.jpeg', audio: 'assets/ottobre.mp3'),
   ]),
   const MonthData(name: 'Novembre', video: 'assets/novembre.mp4', people: [
-    Person(name: 'Vjollca Hita', day: 11, photo: 'assets/novembre.jpeg', audio: 'assets/novembre.mp3'),
-    Person(name: 'Claid Dosti', day: 24, photo: 'assets/novembre2.jpeg', audio: 'assets/novembre2.mp3'),
+    Person(name: 'Vjollca Hita', day: 11, photo: 'assets/novembre2.jpeg', audio: 'assets/novembre2.mp3'),
+    Person(name: 'Claid Dosti', day: 24, photo: 'assets/novembre.jpeg', audio: 'assets/novembre.mp3'),
   ]),
   const MonthData(name: 'Dicembre', video: 'assets/dicembre.mp4', people: [
     Person(name: 'Amanda Rexha', day: 12, photo: 'assets/dicembre.jpeg', audio: 'assets/dicembre.mp3'),
@@ -129,6 +129,7 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
+      await _videoController!.setVolume(0.0); // Video Muto
       await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
@@ -255,26 +256,27 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildPortraitLayout(MonthData data) {
     return Column(
       children: [
-        // Frecce di test in alto
-        _buildNavArrows(),
+        const SizedBox(height: 8),
         
-        // Foto in alto
+        // Foto in alto (piccole)
         if (data.people.isNotEmpty)
-          Expanded(
-            flex: 2,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: data.people
-                  .map((p) => _buildPhotoBox(p, data.people.length))
-                  .toList(),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: data.people
+                .map((p) => _buildPhotoBox(p, data.people.length))
+                .toList(),
           ),
 
-        // Calendario in basso
-        Expanded(
-          flex: 3,
-          child: Center(child: _buildCalendar(data)),
+        const Spacer(),
+
+        // Calendario (con frecce sopra) in basso
+        Flexible(
+          child: Center(
+            child: _buildCalendar(data),
+          ),
         ),
+        
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -285,18 +287,18 @@ class _CalendarPageState extends State<CalendarPage> {
   Widget _buildLandscapeLayout(MonthData data) {
     return Row(
       children: [
-        // Foto a sinistra
-        Expanded(
-          flex: 2,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildNavArrows(),
-              if (data.people.isNotEmpty)
+        // Foto a sinistra (piccole, una sopra l'altra)
+        if (data.people.isNotEmpty)
+          Expanded(
+            flex: 2,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
                 ...data.people.map((p) => _buildPhotoBox(p, data.people.length)).toList(),
-            ],
+              ],
+            ),
           ),
-        ),
         
         // Calendario a destra
         Expanded(
@@ -310,49 +312,23 @@ class _CalendarPageState extends State<CalendarPage> {
   // ============================================================
   // COMPONENTI UI
   // ============================================================
-  Widget _buildNavArrows() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
-          onPressed: () => _changeMonth(-1),
-        ),
-        Text(
-          monthsData[_currentMonthIndex].name.toUpperCase(),
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-            color: Colors.white,
-            shadows: [Shadow(color: Colors.black, blurRadius: 8)],
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.arrow_forward_ios, color: Colors.white70),
-          onPressed: () => _changeMonth(1),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPhotoBox(Person person, int count) {
-    // Se ci sono 2 persone, riduciamo le dimensioni
-    final double size = count > 1 ? 120 : 200;
+    // Dimensioni ridotte
+    final double size = count > 1 ? 70 : 90;
 
     return Container(
-      margin: const EdgeInsets.all(8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.all(6),
+      padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.black45,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white54, width: 2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white54, width: 1.5),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: Image.asset(
               person.photo,
               width: size,
@@ -362,15 +338,15 @@ class _CalendarPageState extends State<CalendarPage> {
                 width: size,
                 height: size,
                 color: Colors.grey,
-                child: const Icon(Icons.person, size: 50),
+                child: const Icon(Icons.person, size: 30),
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             person.name,
             style: TextStyle(
-              fontSize: count > 1 ? 14 : 18,
+              fontSize: count > 1 ? 10 : 12,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -381,6 +357,62 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildCalendar(MonthData data) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Barra con frecce esattamente sopra il calendario
+        _buildMonthHeader(),
+        const SizedBox(height: 8),
+        
+        // Griglia calendario
+        Container(
+          padding: const EdgeInsets.all(12),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 4,
+            crossAxisSpacing: 4,
+            children: _buildCalendarCells(data),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white70, size: 20),
+          onPressed: () => _changeMonth(-1),
+        ),
+        Text(
+          monthsData[_currentMonthIndex].name.toUpperCase(),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
+            color: Colors.white,
+            shadows: [Shadow(color: Colors.black, blurRadius: 8)],
+          ),
+        ),
+        IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, color: Colors.white70, size: 20),
+          onPressed: () => _changeMonth(1),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildCalendarCells(MonthData data) {
     final now = DateTime.now();
     final year = now.year;
     final month = _currentMonthIndex + 1;
@@ -397,7 +429,7 @@ class _CalendarPageState extends State<CalendarPage> {
         Center(
           child: Text(
             wd,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white70),
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white70),
           ),
         ),
       );
@@ -410,7 +442,6 @@ class _CalendarPageState extends State<CalendarPage> {
 
     // Giorni del mese
     for (int day = 1; day <= daysInMonth; day++) {
-      // Controlla se questo giorno è un compleanno
       final birthdaysToday = data.people.where((p) => p.day == day).toList();
       final isBirthday = birthdaysToday.isNotEmpty;
 
@@ -418,23 +449,22 @@ class _CalendarPageState extends State<CalendarPage> {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isBirthday ? const Color(0xFFFF8C42) : Colors.white10,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: isBirthday ? Colors.white : Colors.white30,
-            width: isBirthday ? 2 : 1,
+            width: isBirthday ? 1.5 : 1,
           ),
         ),
         child: Text(
           '$day',
           style: TextStyle(
-            fontSize: isBirthday ? 18 : 15,
+            fontSize: isBirthday ? 16 : 13,
             fontWeight: isBirthday ? FontWeight.w900 : FontWeight.w500,
             color: isBirthday ? Colors.black87 : Colors.white,
           ),
         ),
       );
 
-      // Applica l'animazione di lampeggio se è un compleanno
       if (isBirthday) {
         cells.add(BlinkingCell(child: dayContent));
       } else {
@@ -442,23 +472,7 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: GridView.count(
-        crossAxisCount: 7,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        children: cells,
-      ),
-    );
+    return cells;
   }
 }
 
