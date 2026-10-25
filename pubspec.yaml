@@ -12,17 +12,21 @@ dependencies:
   cupertino_icons: ^1.0.6
   warm_alarm: ^0.2.1
   permission_handler: ^13.0.2
-  video_player: ^2.11.1 # Necessario per i video in slow motion
+  video_player: ^2.11.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: "^0.13.1" # Aggiunto per l'icona
 
 flutter:
   uses-material-design: true
-
-  # Includendo la cartella intera, Flutter caricherà automaticamente 
-  # tutte le immagini (jpeg, png), i video (mp4) e gli audio (mp3)
   assets:
     - assets/
+
+# Configurazione per l'icona
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icona.jpeg"
