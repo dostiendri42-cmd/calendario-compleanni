@@ -10,13 +10,13 @@ import 'package:permission_handler/permission_handler.dart';
 class Person {
   final String name;
   final int day;
-  final String photo;
+  final String photoBase; // Ora usiamo il percorso base senza estensione
   final String audio;
 
   const Person({
     required this.name,
     required this.day,
-    required this.photo,
+    required this.photoBase,
     required this.audio,
   });
 }
@@ -38,38 +38,38 @@ class MonthData {
 // ============================================================
 final List<MonthData> monthsData = [
   const MonthData(name: 'Gennaio', video: 'assets/gennaio.mp4', people: [
-    Person(name: 'Mimoza Sulo', day: 18, photo: 'assets/gennaio.jpeg', audio: 'assets/gennaio.mp3'),
+    Person(name: 'Mimoza Sulo', day: 18, photoBase: 'assets/gennaio', audio: 'assets/gennaio.mp3'),
   ]),
   const MonthData(name: 'Febbraio', video: 'assets/febbraio.mp4', people: [
-    Person(name: 'Rigels Hita', day: 18, photo: 'assets/febbraio.jpeg', audio: 'assets/febbraio.mp3'),
+    Person(name: 'Rigels Hita', day: 18, photoBase: 'assets/febbraio', audio: 'assets/febbraio.mp3'),
   ]),
   const MonthData(name: 'Marzo', video: 'assets/marzo.mp4', people: [
-    Person(name: 'Lukas Hita', day: 10, photo: 'assets/marzo.jpeg', audio: 'assets/marzo.mp3'),
+    Person(name: 'Lukas Hita', day: 10, photoBase: 'assets/marzo', audio: 'assets/marzo.mp3'),
   ]),
   const MonthData(name: 'Aprile', video: 'assets/aprile.mp4', people: [
-    Person(name: 'Arben Rexha', day: 5, photo: 'assets/aprile.jpeg', audio: 'assets/aprile.mp3'),
+    Person(name: 'Arben Rexha', day: 5, photoBase: 'assets/aprile', audio: 'assets/aprile.mp3'),
   ]),
   const MonthData(name: 'Maggio', video: 'assets/maggio.mp4', people: []),
   const MonthData(name: 'Giugno', video: 'assets/giugno.mp4', people: [
-    Person(name: 'Albion Rexha', day: 16, photo: 'assets/giugno.jpeg', audio: 'assets/giugno.mp3'),
+    Person(name: 'Albion Rexha', day: 16, photoBase: 'assets/giugno', audio: 'assets/giugno.mp3'),
   ]),
   const MonthData(name: 'Luglio', video: 'assets/luglio.mp4', people: [
-    Person(name: 'Arben Dosti', day: 22, photo: 'assets/luglio.jpeg', audio: 'assets/luglio.mp3'),
+    Person(name: 'Arben Dosti', day: 22, photoBase: 'assets/luglio', audio: 'assets/luglio.mp3'),
   ]),
   const MonthData(name: 'Agosto', video: 'assets/agosto.mp4', people: []),
   const MonthData(name: 'Settembre', video: 'assets/settembre.mp4', people: [
-    Person(name: 'Albana Rexha', day: 16, photo: 'assets/settembre.jpeg', audio: 'assets/settembre.mp3'),
+    Person(name: 'Albana Rexha', day: 16, photoBase: 'assets/settembre', audio: 'assets/settembre.mp3'),
   ]),
   const MonthData(name: 'Ottobre', video: 'assets/ottobre.mp4', people: [
-    Person(name: 'Ayla Rexha', day: 8, photo: 'assets/ottobre2.jpeg', audio: 'assets/ottobre2.mp3'),
-    Person(name: 'Endri Dosti', day: 20, photo: 'assets/ottobre.jpeg', audio: 'assets/ottobre.mp3'),
+    Person(name: 'Ayla Rexha', day: 8, photoBase: 'assets/ottobre2', audio: 'assets/ottobre2.mp3'),
+    Person(name: 'Endri Dosti', day: 20, photoBase: 'assets/ottobre', audio: 'assets/ottobre.mp3'),
   ]),
   const MonthData(name: 'Novembre', video: 'assets/novembre.mp4', people: [
-    Person(name: 'Vjollca Hita', day: 11, photo: 'assets/novembre2.jpeg', audio: 'assets/novembre2.mp3'),
-    Person(name: 'Claid Dosti', day: 24, photo: 'assets/novembre.jpeg', audio: 'assets/novembre.mp3'),
+    Person(name: 'Vjollca Hita', day: 11, photoBase: 'assets/novembre2', audio: 'assets/novembre2.mp3'),
+    Person(name: 'Claid Dosti', day: 24, photoBase: 'assets/novembre', audio: 'assets/novembre.mp3'),
   ]),
   const MonthData(name: 'Dicembre', video: 'assets/dicembre.mp4', people: [
-    Person(name: 'Amanda Rexha', day: 12, photo: 'assets/dicembre.jpeg', audio: 'assets/dicembre.mp3'),
+    Person(name: 'Amanda Rexha', day: 12, photoBase: 'assets/dicembre', audio: 'assets/dicembre.mp3'),
   ]),
 ];
 
@@ -118,7 +118,6 @@ class _CalendarPageState extends State<CalendarPage> {
     super.dispose();
   }
 
-  // Inizializza il video per il mese corrente
   Future<void> _initVideo() async {
     setState(() => _isVideoInitialized = false);
     await _videoController?.dispose();
@@ -129,8 +128,8 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.3); // Video Muto
-      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
+      await _videoController!.setVolume(0.3);
+      await _videoController!.setPlaybackSpeed(0.7);
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -138,7 +137,6 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  // Imposta la sveglia reale per tutti i compleanni dell'anno
   Future<void> _initAlarmsAndPermissions() async {
     await Permission.notification.request();
     await Permission.scheduleExactAlarm.request();
@@ -150,41 +148,58 @@ class _CalendarPageState extends State<CalendarPage> {
       for (int p = 0; p < month.people.length; p++) {
         final person = month.people[p];
         
-        // Calcola la prossima data del compleanno alle 09:00
-        DateTime targetDate = DateTime(now.year, m + 1, person.day, 9, 0);
-        if (targetDate.isBefore(now)) {
-          targetDate = DateTime(now.year + 1, m + 1, person.day, 9, 0);
+        DateTime targetDate = DateTime(now.year, m + 1, person.day);
+        
+        if (targetDate.isBefore(DateTime(now.year, now.month, now.day))) {
+          targetDate = DateTime(now.year + 1, m + 1, person.day);
         }
 
+        // Sveglia alle 9:00
+        final alarm9 = DateTime(targetDate.year, targetDate.month, targetDate.day, 9, 0);
         await WarmAlarm.scheduleAlarm(
           WarmAlarmSchedule(
-            id: (m + 1) * 100 + p, // ID univoco per ogni persona
-            scheduledAt: targetDate,
+            id: (m + 1) * 1000 + p * 10 + 1,
+            scheduledAt: alarm9,
             notification: WarmAlarmNotification(
               title: 'Buon Compleanno!',
-              body: 'Oggi è il compleanno di ${person.name}',
+              body: 'Oggi è il compleanno di ${person.name} (9:00)',
             ),
             audio: WarmAlarmAudio(
-              assetPath: person.audio, // Usa l'MP3 specifico
-              loop: true,
+              assetPath: person.audio,
+              loop: false, // Suona una volta (assicurati che l'mp3 abbia 2 ripetizioni)
+            ),
+          ),
+        );
+
+        // Sveglia alle 10:00
+        final alarm10 = DateTime(targetDate.year, targetDate.month, targetDate.day, 10, 0);
+        await WarmAlarm.scheduleAlarm(
+          WarmAlarmSchedule(
+            id: (m + 1) * 1000 + p * 10 + 2,
+            scheduledAt: alarm10,
+            notification: WarmAlarmNotification(
+              title: 'Buon Compleanno!',
+              body: 'Oggi è il compleanno di ${person.name} (10:00)',
+            ),
+            audio: WarmAlarmAudio(
+              assetPath: person.audio,
+              loop: false,
             ),
           ),
         );
       }
     }
     
-    // Avvia la sveglia di test per il mese corrente
     _scheduleTestAlarm();
   }
 
-  // Sveglia di test: 3 secondi dopo
   Future<void> _scheduleTestAlarm() async {
     await WarmAlarm.cancelAlarm(TEST_ALARM_ID);
     
     final people = monthsData[_currentMonthIndex].people;
     if (people.isEmpty) return;
 
-    final person = people.first; // Prende la prima persona del mese
+    final person = people.first;
     final testTime = DateTime.now().add(const Duration(seconds: 3));
 
     await WarmAlarm.scheduleAlarm(
@@ -197,7 +212,7 @@ class _CalendarPageState extends State<CalendarPage> {
         ),
         audio: WarmAlarmAudio(
           assetPath: person.audio,
-          loop: true,
+          loop: false,
         ),
       ),
     );
@@ -218,7 +233,6 @@ class _CalendarPageState extends State<CalendarPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // SFONDO VIDEO
           if (_isVideoInitialized && _videoController != null)
             SizedBox.expand(
               child: FittedBox(
@@ -233,7 +247,6 @@ class _CalendarPageState extends State<CalendarPage> {
           else
             Container(color: Colors.black),
 
-          // LAYOUT RESPONSIVE
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -250,71 +263,53 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  // ============================================================
-  // LAYOUT PORTRAIT (Verticale)
-  // ============================================================
   Widget _buildPortraitLayout(MonthData data) {
-    return Column(
-      children: [
-        const SizedBox(height: 8),
-        
-        // Foto in alto (piccole)
-        if (data.people.isNotEmpty)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: data.people
-                .map((p) => _buildPhotoBox(p, data.people.length))
-                .toList(),
-          ),
-
-        const Spacer(),
-
-        // Calendario (con frecce sopra) in basso
-        Flexible(
-          child: Center(
-            child: _buildCalendar(data),
-          ),
-        ),
-        
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  // ============================================================
-  // LAYOUT LANDSCAPE (Orizzontale)
-  // ============================================================
-  Widget _buildLandscapeLayout(MonthData data) {
-    return Row(
-      children: [
-        // Foto a sinistra (piccole, una sopra l'altra)
-        if (data.people.isNotEmpty)
-          Expanded(
-            flex: 2,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                ...data.people.map((p) => _buildPhotoBox(p, data.people.length)).toList(),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 50.0), // Più spazio in fondo
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          if (data.people.isNotEmpty)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: data.people.map((p) => _buildPhotoBox(p)).toList(),
+            ),
+          const Spacer(),
+          Flexible(
+            child: Center(
+              child: _buildCalendar(data),
             ),
           ),
-        
-        // Calendario a destra
-        Expanded(
-          flex: 3,
-          child: Center(child: _buildCalendar(data)),
-        ),
-      ],
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 
-  // ============================================================
-  // COMPONENTI UI
-  // ============================================================
-  Widget _buildPhotoBox(Person person, int count) {
-    // Dimensioni ridotte
-    final double size = count > 1 ? 70 : 90;
+  Widget _buildLandscapeLayout(MonthData data) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 30.0, top: 8.0),
+      child: Row(
+        children: [
+          if (data.people.isNotEmpty)
+            Expanded(
+              flex: 2,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: data.people.map((p) => _buildPhotoBox(p)).toList(),
+              ),
+            ),
+          Expanded(
+            flex: 3,
+            child: Center(child: _buildCalendar(data)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPhotoBox(Person person) {
+    const double size = 90;
 
     return Container(
       margin: const EdgeInsets.all(6),
@@ -329,26 +324,23 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              person.photo,
-              width: size,
-              height: size,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: size,
-                height: size,
-                color: Colors.grey,
-                child: const Icon(Icons.person, size: 30),
-              ),
+            // Usa il widget intelligente per caricare l'immagine
+            child: _FallbackImage(
+              basePath: person.photoBase,
+              size: size,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            person.name,
-            style: TextStyle(
-              fontSize: count > 1 ? 10 : 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          SizedBox(
+            width: size,
+            child: Text(
+              person.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -360,11 +352,8 @@ class _CalendarPageState extends State<CalendarPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Barra con frecce esattamente sopra il calendario
         _buildMonthHeader(),
         const SizedBox(height: 8),
-        
-        // Griglia calendario
         Container(
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -423,7 +412,6 @@ class _CalendarPageState extends State<CalendarPage> {
     final List<Widget> cells = [];
     const weekdays = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
 
-    // Intestazioni giorni
     for (var wd in weekdays) {
       cells.add(
         Center(
@@ -435,12 +423,10 @@ class _CalendarPageState extends State<CalendarPage> {
       );
     }
 
-    // Celle vuote
     for (int i = 0; i < startOffset; i++) {
       cells.add(const SizedBox());
     }
 
-    // Giorni del mese
     for (int day = 1; day <= daysInMonth; day++) {
       final birthdaysToday = data.people.where((p) => p.day == day).toList();
       final isBirthday = birthdaysToday.isNotEmpty;
@@ -473,6 +459,56 @@ class _CalendarPageState extends State<CalendarPage> {
     }
 
     return cells;
+  }
+}
+
+// ============================================================
+// WIDGET INTELLIGENTE PER CARICARE LE IMMAGINI
+// ============================================================
+class _FallbackImage extends StatefulWidget {
+  final String basePath;
+  final double size;
+
+  const _FallbackImage({required this.basePath, required this.size});
+
+  @override
+  State<_FallbackImage> createState() => _FallbackImageState();
+}
+
+class _FallbackImageState extends State<_FallbackImage> {
+  // Prova queste estensioni in ordine
+  final List<String> _extensions = ['.jpeg', '.jpg', '.png'];
+  int _currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_currentIndex >= _extensions.length) {
+      // Se nessuna immagine è valida, mostra un'icona segnaposto
+      return Container(
+        width: widget.size,
+        height: widget.size,
+        color: Colors.grey,
+        child: const Icon(Icons.person, size: 40),
+      );
+    }
+
+    return Image.asset(
+      '${widget.basePath}${_extensions[_currentIndex]}',
+      width: widget.size,
+      height: widget.size,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) {
+        // Se fallisce, passa all'estensione successiva
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _currentIndex++;
+            });
+          }
+        });
+        return SizedBox(width: widget.size, height: widget.size);
+      },
+    );
   }
 }
 
