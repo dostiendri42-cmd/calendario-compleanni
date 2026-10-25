@@ -11,10 +11,8 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   warm_alarm: ^0.2.1
-  background: ^1.3.1
-  flutter_tts: ^4.2.5
   permission_handler: ^13.0.2
-  path_provider: ^2.1.6
+  video_player: ^2.11.1 # Necessario per i video in slow motion
 
 dev_dependencies:
   flutter_test:
@@ -24,6 +22,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  # Includendo la cartella intera, Flutter caricherà automaticamente 
+  # tutte le immagini (jpeg, png), i video (mp4) e gli audio (mp3)
   assets:
-    - assets/ottobre.jpeg
-    - assets/ottobre.mp4
+    - assets/
