@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle; // Necessario per il controllo dei file
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:video_player/video_player.dart';
 import 'package:warm_alarm/warm_alarm.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -74,8 +74,6 @@ final List<MonthData> monthsData = [
   ]),
 ];
 
-const int TEST_ALARM_ID = 1;
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await WarmAlarm.init();
@@ -129,8 +127,8 @@ class _CalendarPageState extends State<CalendarPage> {
     try {
       await _videoController!.initialize();
       await _videoController!.setLooping(true);
-      await _videoController!.setVolume(0.3); // Volume al 30%
-      await _videoController!.setPlaybackSpeed(0.7); // Slow motion x0.7
+      await _videoController!.setVolume(0.3);
+      await _videoController!.setPlaybackSpeed(0.7);
       await _videoController!.play();
       if (mounted) setState(() => _isVideoInitialized = true);
     } catch (e) {
@@ -167,7 +165,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             audio: WarmAlarmAudio(
               assetPath: person.audio,
-              loop: false, // Suona una volta (l'MP3 deve avere già le 2 ripetizioni)
+              loop: false,
             ),
           ),
         );
@@ -190,33 +188,6 @@ class _CalendarPageState extends State<CalendarPage> {
         );
       }
     }
-    
-    _scheduleTestAlarm();
-  }
-
-  Future<void> _scheduleTestAlarm() async {
-    await WarmAlarm.cancelAlarm(TEST_ALARM_ID);
-    
-    final people = monthsData[_currentMonthIndex].people;
-    if (people.isEmpty) return;
-
-    final person = people.first;
-    final testTime = DateTime.now().add(const Duration(seconds: 3));
-
-    await WarmAlarm.scheduleAlarm(
-      WarmAlarmSchedule(
-        id: TEST_ALARM_ID,
-        scheduledAt: testTime,
-        notification: WarmAlarmNotification(
-          title: 'Sveglia di prova',
-          body: 'Compleanno di ${person.name}',
-        ),
-        audio: WarmAlarmAudio(
-          assetPath: person.audio,
-          loop: false,
-        ),
-      ),
-    );
   }
 
   void _changeMonth(int increment) {
@@ -224,7 +195,6 @@ class _CalendarPageState extends State<CalendarPage> {
       _currentMonthIndex = (_currentMonthIndex + increment + 12) % 12;
     });
     _initVideo();
-    _scheduleTestAlarm();
   }
 
   @override
@@ -279,10 +249,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 .toList(),
           ),
         
-        // Questo Spacer spinge il calendario verso il basso
         const Spacer(), 
         
-        // Il calendario con un margine di 60 pixel dal fondo per non coprire i tasti
         Padding(
           padding: const EdgeInsets.only(bottom: 60.0),
           child: _buildCalendar(data),
@@ -317,10 +285,11 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildPhotoBox(Person person) {
-    const double size = 90;
+    // Foto ingrandite: 120 invece di 90
+    const double size = 120;
 
     return Container(
-      margin: const EdgeInsets.all(6),
+      margin: const EdgeInsets.all(8),
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
         color: Colors.black45,
@@ -332,21 +301,20 @@ class _CalendarPageState extends State<CalendarPage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            // Usa il nuovo widget intelligente che gestisce il caricamento
             child: _SmartImage(
               key: ValueKey(person.name),
               basePath: person.photoBase,
               size: size,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           SizedBox(
             width: size,
             child: Text(
               person.name,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -367,7 +335,8 @@ class _CalendarPageState extends State<CalendarPage> {
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
+            // Sfondo del calendario quasi trasparente (prima era 0.3)
+            color: Colors.black.withOpacity(0.08),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: Colors.white24),
           ),
@@ -495,13 +464,11 @@ class _SmartImageState extends State<_SmartImage> {
   }
 
   Future<void> _findImage() async {
-    // Prova le estensioni più comuni
     final extensions = ['.jpeg', '.jpg', '.png', '.JPG', '.JPEG', '.PNG'];
     
     for (final ext in extensions) {
       final path = '${widget.basePath}$ext';
       try {
-        // rootBundle controlla se il file esiste davvero nel pacchetto
         await rootBundle.load(path);
         if (mounted) {
           setState(() {
@@ -509,13 +476,12 @@ class _SmartImageState extends State<_SmartImage> {
             _isLoading = false;
           });
         }
-        return; // Trovato! Esci dal ciclo
+        return;
       } catch (_) {
-        // Non trovato, passa alla prossima estensione
+        // Non trovato, passa alla prossima
       }
     }
     
-    // Se arriva qui, non ha trovato nulla
     if (mounted) {
       setState(() {
         _isLoading = false;
@@ -526,7 +492,6 @@ class _SmartImageState extends State<_SmartImage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Mostra un cerchietto di caricamento mentre cerca il file
       return Container(
         width: widget.size,
         height: widget.size,
@@ -542,7 +507,6 @@ class _SmartImageState extends State<_SmartImage> {
     }
 
     if (_resolvedPath != null) {
-      // Mostra l'immagine trovata
       return Image.asset(
         _resolvedPath!,
         width: widget.size,
@@ -551,12 +515,11 @@ class _SmartImageState extends State<_SmartImage> {
       );
     }
 
-    // Segnaposto se nessuna immagine è valida
     return Container(
       width: widget.size,
       height: widget.size,
       color: Colors.grey.shade800,
-      child: const Icon(Icons.person, size: 40, color: Colors.white54),
+      child: const Icon(Icons.person, size: 50, color: Colors.white54),
     );
   }
 }
