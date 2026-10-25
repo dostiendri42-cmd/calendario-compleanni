@@ -39,8 +39,9 @@ class MonthData {
 // ============================================================
 final List<MonthData> monthsData = [
   const MonthData(name: 'Gennaio', video: 'assets/gennaio.mp4', people: [
-    Person(name: 'Sherif Hita', day: 1, photoBase: 'assets/gennaio2', audio: 'assets/gennaio2.mp3'),
+    // Ordine invertito: Mimoza a sinistra, Sherif a destra
     Person(name: 'Mimoza Sulo', day: 18, photoBase: 'assets/gennaio', audio: 'assets/gennaio.mp3'),
+    Person(name: 'Sherif Hita', day: 1, photoBase: 'assets/gennaio2', audio: 'assets/gennaio2.mp3'),
   ]),
   const MonthData(name: 'Febbraio', video: 'assets/febbraio.mp4', people: [
     Person(name: 'Rigels Hita', day: 18, photoBase: 'assets/febbraio', audio: 'assets/febbraio.mp3'),
@@ -86,7 +87,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'kalendar', // Nome dell'app aggiornato
+      title: 'kalendar', // Nome dell'app
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(),
       home: const CalendarPage(),
