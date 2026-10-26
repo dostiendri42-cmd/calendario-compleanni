@@ -102,7 +102,7 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  int _currentMonthIndex = 9; // Inizia da Ottobre
+  DateTime _currentMonth = DateTime.now(); 
   VideoPlayerController? _videoController;
   bool _isVideoInitialized = false;
 
@@ -123,7 +123,8 @@ class _CalendarPageState extends State<CalendarPage> {
     setState(() => _isVideoInitialized = false);
     await _videoController?.dispose();
     
-    final videoPath = monthsData[_currentMonthIndex].video;
+    final monthIndex = _currentMonth.month - 1;
+    final videoPath = monthsData[monthIndex].video;
     _videoController = VideoPlayerController.asset(videoPath);
     
     try {
@@ -138,9 +139,6 @@ class _CalendarPageState extends State<CalendarPage> {
     }
   }
 
-  // ============================================================
-  // LOGICA SVEGLIE CON CACHE PER 5 ANNI
-  // ============================================================
   Future<void> _initAlarmsAndPermissions() async {
     await Permission.notification.request();
     await Permission.scheduleExactAlarm.request();
@@ -148,22 +146,15 @@ class _CalendarPageState extends State<CalendarPage> {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
 
-    // 1. Carica la lista degli ID già programmati
     final allSavedIds = prefs.getStringList('scheduled_alarm_ids') ?? [];
-    
-    // 2. Filtra: mantieni solo gli ID degli anni >= a quello corrente
-    //    (gli anni passati vengono automaticamente rimossi per pulizia)
     final validSavedIds = allSavedIds
         .map(int.parse)
         .where((id) => (id ~/ 100000) >= now.year)
         .toSet();
 
-    debugPrint("Sveglie già in cache per anni futuri: ${validSavedIds.length}");
-
     const int yearsAhead = 5;
     int newlyScheduled = 0;
 
-    // 3. Cicla su 5 anni
     for (int yearOffset = 0; yearOffset < yearsAhead; yearOffset++) {
       final int year = now.year + yearOffset;
 
@@ -172,12 +163,10 @@ class _CalendarPageState extends State<CalendarPage> {
         for (int p = 0; p < month.people.length; p++) {
           final person = month.people[p];
 
-          // Salta se il compleanno di questo anno è già passato
           final birthdayDate = DateTime(year, m + 1, person.day);
           final today = DateTime(now.year, now.month, now.day);
           if (birthdayDate.isBefore(today)) continue;
 
-          // --- SVEGLIA ORE 9:00 ---
           final alarm9 = DateTime(year, m + 1, person.day, 9, 0);
           final id9 = year * 100000 + (m + 1) * 1000 + p * 10 + 1;
           
@@ -197,7 +186,6 @@ class _CalendarPageState extends State<CalendarPage> {
             newlyScheduled++;
           }
 
-          // --- SVEGLIA ORE 10:00 ---
           final alarm10 = DateTime(year, m + 1, person.day, 10, 0);
           final id10 = year * 100000 + (m + 1) * 1000 + p * 10 + 2;
           
@@ -220,26 +208,22 @@ class _CalendarPageState extends State<CalendarPage> {
       }
     }
 
-    // 4. Salva la lista aggiornata
     await prefs.setStringList(
       'scheduled_alarm_ids',
       validSavedIds.map((e) => e.toString()).toList(),
     );
-
-    debugPrint("Nuove sveglie programmate adesso: $newlyScheduled");
-    debugPrint("Totale sveglie attive in cache: ${validSavedIds.length}");
   }
 
   void _changeMonth(int increment) {
     setState(() {
-      _currentMonthIndex = (_currentMonthIndex + increment + 12) % 12;
+      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + increment, 1);
     });
     _initVideo();
   }
 
   @override
   Widget build(BuildContext context) {
-    final data = monthsData[_currentMonthIndex];
+    final data = monthsData[_currentMonth.month - 1];
 
     return Scaffold(
       body: Stack(
@@ -381,6 +365,9 @@ class _CalendarPageState extends State<CalendarPage> {
   }
 
   Widget _buildMonthHeader() {
+    final monthName = monthsData[_currentMonth.month - 1].name.toUpperCase();
+    final year = _currentMonth.year;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -389,7 +376,7 @@ class _CalendarPageState extends State<CalendarPage> {
           onPressed: () => _changeMonth(-1),
         ),
         Text(
-          monthsData[_currentMonthIndex].name.toUpperCase(),
+          '$monthName $year',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -408,10 +395,11 @@ class _CalendarPageState extends State<CalendarPage> {
 
   List<Widget> _buildCalendarCells(MonthData data) {
     final now = DateTime.now();
-    final year = now.year;
-    final month = _currentMonthIndex + 1;
-    final firstDay = DateTime(year, month, 1);
-    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final viewYear = _currentMonth.year;
+    final viewMonth = _currentMonth.month;
+    
+    final firstDay = DateTime(viewYear, viewMonth, 1);
+    final daysInMonth = DateTime(viewYear, viewMonth + 1, 0).day;
     final startOffset = firstDay.weekday - 1;
 
     final List<Widget> cells = [];
@@ -435,26 +423,54 @@ class _CalendarPageState extends State<CalendarPage> {
     for (int day = 1; day <= daysInMonth; day++) {
       final birthdaysToday = data.people.where((p) => p.day == day).toList();
       final isBirthday = birthdaysToday.isNotEmpty;
+      
+      final isToday = (now.year == viewYear && now.month == viewMonth && now.day == day);
+
+      Color cellColor = Colors.white10;
+      Color borderColor = Colors.white30;
+      double borderWidth = 1.0;
+      Color textColor = Colors.white;
+
+      if (isBirthday) {
+        cellColor = const Color(0xFFFF8C42);
+        borderColor = Colors.white;
+        borderWidth = 1.5;
+        textColor = Colors.black87;
+      } else if (isToday) {
+        cellColor = Colors.blueAccent.withOpacity(0.3);
+        borderColor = Colors.blueAccent;
+        borderWidth = 1.5;
+        textColor = Colors.white;
+      }
 
       Widget dayContent = Container(
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isBirthday ? const Color(0xFFFF8C42) : Colors.white10,
+          color: cellColor,
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
-            color: isBirthday ? Colors.white : Colors.white30,
-            width: isBirthday ? 1.5 : 1,
+            color: borderColor,
+            width: borderWidth,
           ),
         ),
         child: Text(
           '$day',
           style: TextStyle(
-            fontSize: isBirthday ? 16 : 13,
-            fontWeight: isBirthday ? FontWeight.w900 : FontWeight.w500,
-            color: isBirthday ? Colors.black87 : Colors.white,
+            fontSize: (isBirthday || isToday) ? 16 : 13,
+            fontWeight: (isBirthday || isToday) ? FontWeight.w900 : FontWeight.w500,
+            color: textColor,
           ),
         ),
       );
+
+      // --- LOGICA DI INGRANDIMENTO ---
+      // Se è oggi, lo ingrandiamo del 20%. 
+      // Se è anche un compleanno, lo ingrandiamo del 10% per non coprire troppo gli altri.
+      if (isToday && isBirthday) {
+        dayContent = Transform.scale(scale: 1.1, child: dayContent);
+      } else if (isToday) {
+        dayContent = Transform.scale(scale: 1.2, child: dayContent);
+      }
 
       if (isBirthday) {
         cells.add(BlinkingCell(child: dayContent));
